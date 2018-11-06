@@ -1,12 +1,12 @@
 #include <Arduino.h>
 #include <math.h>
-
+//THIS IS A TEST
 // declaring global variables
 const int randPin = 1;
 const int P = 19211;
 
 using namespace std;
-#include <iostream>
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 The privateKey function takes in no paramaters.
     Returns:
