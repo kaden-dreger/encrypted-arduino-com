@@ -6,7 +6,7 @@ const int randPin = 1;
 const int P = 19211;
 
 using namespace std;
-
+#include <iostream>
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 The privateKey function takes in no paramaters.
     Returns:
