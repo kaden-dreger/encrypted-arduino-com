@@ -1,1 +1,24 @@
-Halu? baby lol
+Names: Rutvik Patel and Kaden Dreger
+ID  : 1530012 and 
+CMPUT 274 Fall 2018
+Assignment 2 Part 1: Encrypted Arduino Communication
+
+Included files:
+   * ________.cpp
+   * README
+   * Makefile
+
+Accessories:
+    * 2 Arduino Mega 2560 Boards
+    * 3 wires
+
+Wiring Instructions:
+
+    Arduino [1] Pin TX3 <--> Arduino [2] Pin RX3 and Arduino [2] Pin TX3 <--> Arduino [1] RX3 and Arduino [1] GND <--> Arduino [2] GND
+
+Running Instructions and Notes:
+
+    In order to correctly run the program, make sure both Arduino mega boards are connected to the respective computers, then you must navigate to the correct directory, and call the command "make upload && serial-mon". The program will then be uploaded to your Arduino board, and the serial monitor will then be displayed on your terminal window. The program will display your unique public key, which should be exchanged with your partner's public key and inputted
+    via the keyboard to the serial monitor. A shared key will then be computed and displayed, this key should be the same between you and your partner. You
+    are now free to chat back and forth, the program will encrypt the character you plan to send and it will be decrypted via the other Arduino and displayed
+    on your partner's serial monitor. 
