@@ -7,6 +7,7 @@ const int P = 19211;
 
 using namespace std;
 
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 The privateKey function takes in no paramaters.
     Returns:
@@ -36,6 +37,20 @@ uint16_t privateKey()
     return privKey;
 }
 
+uint32_t makeKey(int a, uint16_t b)
+{
+    uint32_t result;
+    for (uint16_t i = 0; i < b; i++)
+    {
+        if (i == 0)
+        {
+            result = 1 % P;
+            a = a % P;
+        }
+        result = (result * a) % P;
+    }
+    return result;
+}
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 The publicKey function takes the following paramaters:
@@ -57,31 +72,36 @@ uint32_t publicKey(uint16_t privKey)
     This function is a modified implementation from the version
     showed in class, specifically the diffie_hellman_prelim.cpp
     */
-    for (uint16_t i = 0; i < privKey; i++)
-    {
-        if (i == 0)
-        {
-            pubKey = 1 % P;
-            g = g % P;
-        }
-        pubKey = (pubKey * g) % P;
-    }
+    pubKey = makeKey(g, privKey);
     Serial.print("Your public key: "); 
     Serial.println(pubKey);
     return pubKey;
 }
 
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+The getsharedInput function takes no paramaters.
+
+    Returns:
+        inputRead: a uin16_t type variable which stores the
+                 public key from the other user.
+This function is responsible for getting the public key from
+the other user. This is done by entering the key via keyboard
+and reading it from serial-mon. Once the key is read it is
+returned as an integer.
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*/
 uint16_t getsharedInput()
 {
-    uint16_t inputRead = 0;
-    while (true) 
+    uint16_t inputRead = 0; // Initialization of the inputRead variable.
+    while (true)    // A while loop that runs until the return key is pressed.
     {
         while (Serial.available() == 0) {}  // wait for input...
-        char tempChar = Serial.read();
+        char tempChar = Serial.read();  // Reading in the input as a character.
         /*https://stackoverflow.com/questions/5029840/convert-char-to-int-in-c-and-c*/
-        int tempInt = tempChar - '0';
-        Serial.print(tempChar);
+        int tempInt = tempChar - '0';   // Converting the ascii value to an integer.
+        Serial.print(tempChar);     // As each character is typed it is printed to
+                                    // the serial-mon.
         if (tempChar == '\r') 
         {
             break;
@@ -96,6 +116,7 @@ uint16_t getsharedInput()
     return inputRead;
 }
 
+
 /*
     This function is a modified implementation from the version
     showed in class, specifically the diffie_hellman_prelim.cpp
@@ -103,15 +124,7 @@ uint16_t getsharedInput()
 uint32_t shareKey(uint16_t input, uint16_t privKey)
 {
     uint32_t sharedKey = 0;
-    for (uint16_t j = 0; j < privKey; j++)
-    {
-        if (j == 0)
-        {
-            sharedKey = 1 % P;
-            input = input % P;
-        }
-        sharedKey = (sharedKey * input) % P;
-    }
+    sharedKey = makeKey(input, privKey);
     Serial.print("The shared key is: ");
     Serial.println(sharedKey);
     return sharedKey;
