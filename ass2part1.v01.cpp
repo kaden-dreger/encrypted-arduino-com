@@ -26,7 +26,12 @@ uint16_t privateKey() {
     // computing our private key
     for (int i = 0; i < 16; i++) {
         tempInt = analogRead(randPin);  // reading the randPin
-        LSB = tempInt & 1;  // finding the LSB MAKE SURE TO CITE THIS... FIND IT.
+        /* 
+        https://stackoverflow.com/questions/6647783/check-value-
+        of-least-significant-bit-lsb-and-most-significant-bit-msb-in-c-c
+        This method was found from user Armen Tsirunyan on July 11 2011.
+        */
+        LSB = tempInt & 1;  // finding the LSB
         privKey += LSB*(pow(base2, i));  // updating privKey using the LSB
         delay(50);  // delay to allows the voltage of randPin to fluctuate
     }
