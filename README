@@ -1,5 +1,5 @@
 Names: Rutvik Patel and Kaden Dreger
-ID  : 1530012 and 
+ID  : 1530012 and 1528632
 CMPUT 274 Fall 2018
 Assignment 2 Part 1: Encrypted Arduino Communication
 
@@ -14,7 +14,9 @@ Accessories:
 
 Wiring Instructions:
 
-    Arduino [1] Pin TX3 <--> Arduino [2] Pin RX3 and Arduino [2] Pin TX3 <--> Arduino [1] RX3 and Arduino [1] GND <--> Arduino [2] GND
+    * Arduino [1] Pin TX3 <--> Arduino [2] Pin RX3
+    * Arduino [2] Pin TX3 <--> Arduino [1] Pin RX3
+    * Arduino [1] GND     <--> Arduino [2] GND
 
 Running Instructions and Notes:
 
