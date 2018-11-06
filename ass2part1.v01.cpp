@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <math.h>
-// MY TEST
-
+//THIS IS A TEST!
 // declaring global variables
 const int randPin = 1;
 const int P = 19211;
