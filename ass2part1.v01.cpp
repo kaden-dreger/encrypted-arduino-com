@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <math.h>
-//THIS IS A TEST!
+
 // declaring global variables
 const int randPin = 1;
 const int P = 19211;
@@ -36,6 +36,20 @@ uint16_t privateKey()
     return privKey;
 }
 
+uint32_t makeKey(int a, uint16_t b)
+{
+    uint32_t result;
+    for (uint16_t i = 0; i < b; i++)
+    {
+        if (i == 0)
+        {
+            result = 1 % P;
+            a = a % P;
+        }
+        result = (result * a) % P;
+    }
+    return result;
+}
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 The publicKey function takes the following paramaters:
@@ -57,15 +71,7 @@ uint32_t publicKey(uint16_t privKey)
     This function is a modified implementation from the version
     showed in class, specifically the diffie_hellman_prelim.cpp
     */
-    for (uint16_t i = 0; i < privKey; i++)
-    {
-        if (i == 0)
-        {
-            pubKey = 1 % P;
-            g = g % P;
-        }
-        pubKey = (pubKey * g) % P;
-    }
+    pubKey = makeKey(g, privKey);
     Serial.print("Your public key: "); 
     Serial.println(pubKey);
     return pubKey;
@@ -103,15 +109,7 @@ uint16_t getsharedInput()
 uint32_t shareKey(uint16_t input, uint16_t privKey)
 {
     uint32_t sharedKey = 0;
-    for (uint16_t j = 0; j < privKey; j++)
-    {
-        if (j == 0)
-        {
-            sharedKey = 1 % P;
-            input = input % P;
-        }
-        sharedKey = (sharedKey * input) % P;
-    }
+    sharedKey = makeKey(input, privKey);
     Serial.print("The shared key is: ");
     Serial.println(sharedKey);
     return sharedKey;
