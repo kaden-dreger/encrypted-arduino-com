@@ -35,16 +35,13 @@ uint16_t privateKey() {
         privKey += LSB*(pow(base2, i));  // updating privKey using the LSB
         delay(50);  // delay to allows the voltage of randPin to fluctuate
     }
+    Serial.print("The private key: ");
+    Serial.println(privKey);
     return privKey;
 }
 
-
 uint32_t makeKey(int a, uint16_t b) {
     uint32_t result;
-    /*
-    This function is a modified implementation from the version
-    showed in class, specifically the diffie_hellman_prelim.cpp
-*/
     for (uint16_t i = 0; i < b; i++) {
         if (i == 0) {
             result = 1 % P;
@@ -54,7 +51,6 @@ uint32_t makeKey(int a, uint16_t b) {
     }
     return result;
 }
-
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 The publicKey function takes the following paramaters:
@@ -94,50 +90,75 @@ and reading it from serial-mon. Once the key is read it is
 returned as an integer.
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 */
+
 uint16_t getsharedInput() {
-    uint16_t inputRead = 0;  // Initialization of the inputRead variable.
-    while (true) {   // A while loop that runs until the return key is pressed.
+    uint16_t inputRead = 0; // Initialization of the inputRead 
+                            // variable.
+    while (true) {   // A while loop that runs until the return
+                    // key is pressed.
         while (Serial.available() == 0) {}  // wait for input...
-        char tempChar = Serial.read();  // Reading in the input as a character.
-        /* https://stackoverflow.com/questions/5029840/
-        convert-char-to-int-in-c-and-c */
+        char tempChar = Serial.read();  // Reading in the input 
+                                        // as a character.
+        /*https://stackoverflow.com/questions/5029840/
+        convert-char-to-int-in-c-and-c*/
         int tempInt = tempChar - '0';   // Converting the ascii value to an integer.
         Serial.print(tempChar);     // As each character is typed it is printed to
                                     // the serial-mon.
-        if (tempChar == '\r') {
+        if (tempChar == '\r') {   // This checks if the return key was pressed.
             break;
         } else {
-            inputRead = inputRead*10 + tempInt;
+            inputRead = inputRead*10 + tempInt;     // This makes sure that the entered
+                                                    // input is converted to a decimal
+                                                    // integer by increasing the inputRead
+                                                    // by 10 everytime a new char is read in.
         }
     }
     Serial.println();
     return inputRead;
 }
 
-// header here
-uint32_t shareKey(uint16_t input, uint16_t privKey) {
-    uint32_t sharedKey = 0;
+
+/*
+    This function is a modified implementation from the version
+    showed in class, specifically the diffie_hellman_prelim.cpp
+*/
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+The shareKey function takes the following paramaters:
+        input: Which is a uint16_t that is the other users key.
+        privKey: Which is a uint16_t private key that was creatde
+                 previously.
+    Returns:
+        sharedKey: a uin32_t type variable which stores the
+                 computed shared key.
+This function is responsible for generating the shared key that
+both users use to encrypt and decrpyt the messages sent.
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*/
+uint32_t shareKey(uint16_t input, uint16_t privKey)
+{
+    uint32_t sharedKey = 0; // Initializing the sharedKey.
+    /* Calling the makeKey function to create the sharedKey*/
     sharedKey = makeKey(input, privKey);
     Serial.print("The shared key is: ");
     Serial.println(sharedKey);
     return sharedKey;
 }
 
-//header here
+
 uint8_t encrypt(char letter, uint16_t key) {
     uint8_t key8 = (uint8_t) key;  // casting to a single byte
     uint8_t eLetter = ((uint8_t) letter) ^ key8;  // compute the encrypted char
     return eLetter;
 }
 
-//header here
+
 char decrypt(uint8_t eletter, uint16_t key) {
     uint8_t key8 = (uint8_t) key;  // casting to a single byte
     uint8_t dLetter = eletter ^ key8;  // computing the decrypted letter
     return (static_cast<char> dLetter);
 }
 
-// header here
+
 void chat(uint16_t key) {
     while (true) {
         while (Serial.available() > 0) {  // wait for input...
@@ -164,7 +185,7 @@ void chat(uint16_t key) {
     }
 }
 
-//header here
+
 void setup() {
     init();
     Serial.begin(9600);
@@ -172,7 +193,7 @@ void setup() {
     Serial.println("Program is now running...");
 }
 
-//header here
+
 int main() {
     uint16_t privKey, incomingKey;
     uint32_t sharedKey, pubKey;
