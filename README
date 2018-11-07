@@ -1,10 +1,11 @@
-Names: Rutvik Patel and Kaden Dreger
-ID  : 1530012 and 1528632
+Names: Rutvik Patel, Kaden Dreger
+ID  : 1530012, 1528632
+CCID: rutvik, kaden
 CMPUT 274 Fall 2018
 Assignment 2 Part 1: Encrypted Arduino Communication
 
 Included files:
-   * ________.cpp
+   * assignment.2.part.1.cpp
    * README
    * Makefile
 
