@@ -19,7 +19,7 @@
 const int randPin = 1;
 const uint32_t P = 2147483647;
 const int communicationPin = 13;
-const bool isServer = false;
+bool isServer = false;
 
 using namespace std;
 
@@ -77,7 +77,7 @@ uint32_t makeKey(uint32_t a, uint32_t b) {
     uint32_t result;  // Initializing the resulting key.
     uint32_t nextB = b;
 
-    if (nextB = b) {
+    if (nextB == b) {
             result = 1 % P;  // Setting up the result.
             a = a % P;  // Setting up 'a'.
         }
@@ -156,38 +156,43 @@ bool wait_on_serial3( uint8_t nbytes, long timeout ) {
 uint32_t handshake(uint32_t key) {
     uint32_t otherKey;
     if (isServer) {
-        while (Serial3.available == 0) {}  // waits for client
-        if (wait_on_serial3(5, 1000) == false) {
-            continue;
-        }
-        char message = Serial3.read();
-        otherKey = uint32_from_serial3();
-        if (message == 'C') {
-            Serial3.write('A');
-            uint32_to_serial3(key);
-        }
-        //while (Serial3.available == 0) {}
-        if (wait_on_serial3(1, 1000) == false) {
-            continue;
-        }
-        tempChar = Serial3.read();
-        while (tempChar != 'A') {
-            //while(Serial3.available == 0) {}
+        while (true) {
+            while (Serial3.available() == 0) {}  // waits for client
             if (wait_on_serial3(5, 1000) == false) {
-            continue;
+                continue;
             }
+            char message = Serial3.read();
             otherKey = uint32_from_serial3();
-            tempChar = Serial3.read();
+            if (message == 'C') {
+                Serial3.write('A');
+                uint32_to_serial3(key);
+            }
+            //while (Serial3.available == 0) {}
+            if (wait_on_serial3(1, 1000) == false) {
+                continue;
+            }
+            char tempChar = Serial3.read();
+            while (tempChar != 'A') {
+                //while(Serial3.available == 0) {}
+                if (wait_on_serial3(5, 1000) == false) {
+                continue;
+                }
+                otherKey = uint32_from_serial3();
+                tempChar = Serial3.read();
+
+            }
+            break;
         }
         Serial.println("Handshake success!");
 
     } else {
-        while true {
+        while (true) {
             Serial3.write('C');
             uint32_to_serial3(key);
             if (wait_on_serial3(5, 1000) == false) {
                 continue;
             }
+            break;
         }
         char message = Serial3.read();
         otherKey = uint32_from_serial3();
@@ -195,7 +200,7 @@ uint32_t handshake(uint32_t key) {
         Serial.println("Handshake success!");
     }
     return otherKey;
-
+}
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -394,6 +399,7 @@ void setup() {
     if (digitalRead(communicationPin) == HIGH){
         isServer = true;
     }
+    Serial.println(isServer);
 
 }
 
@@ -406,20 +412,22 @@ our program.
 */
 int main() {
     uint32_t privKey, incomingKey;  // Initializing values.
-    uint32_t sharedKey, pubKey;
+    uint32_t sharedKey, pubKey, otherKey;
 
     setup();  // Calling each subsequent function.
 
     privKey = privateKey();
     pubKey = publicKey(privKey);
-    incomingKey = getsharedInput();
-    sharedKey = shareKey(incomingKey, privKey);
-    handshake(pubKey);
+    //incomingKey = getsharedInput();
+    //sharedKey = shareKey(incomingKey, privKey);
+    otherKey = handshake(pubKey);
+    Serial.print("The other key is: ");
+    Serial.println(otherKey);
 
 /* makes sure all the characters are pushed to the screen */
     Serial.flush();
 
-    chat(sharedKey);
+    //chat(sharedKey);
 
     return 0;
 }
