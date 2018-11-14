@@ -116,16 +116,11 @@ uint32_t publicKey(uint32_t privKey) {
     return pubKey;
 }
 
-/** Reads an uint32_t from Serial3, starting from the least-significant
- * and finishing with the most significant byte. 
- */
-uint32_t uint32_from_serial3() {
-  uint32_t num = 0;
-  num = num | ((uint32_t) Serial3.read()) << 0;
-  num = num | ((uint32_t) Serial3.read()) << 8;
-  num = num | ((uint32_t) Serial3.read()) << 16;
-  num = num | ((uint32_t) Serial3.read()) << 24;
-  return num;
+void uint32_to_serial3(uint32_t num) {
+  Serial3.write((char) (num >> 0));
+  Serial3.write((char) (num >> 8));
+  Serial3.write((char) (num >> 16));
+  Serial3.write((char) (num >> 24));
 }
 
 
@@ -141,23 +136,66 @@ uint32_t uint32_from_serial3() {
   return num;
 }
 
-uint32_t processBytes(uint32_t fiveBytes) {
-    uint32_t key, message;
-    
-    return key;
+
+/** Waits for a certain number of bytes on Serial3 or timeout 
+ * @param nbytes: the number of bytes we want
+ * @param timeout: timeout period (ms); specifying a negative number
+ *                turns off timeouts (the function waits indefinitely
+ *                if timeouts are turned off).
+ * @return True if the required number of bytes have arrived.
+ */
+bool wait_on_serial3( uint8_t nbytes, long timeout ) {
+  unsigned long deadline = millis() + timeout;//wraparound not a problem
+  while (Serial3.available()<nbytes && (timeout<0 || millis()<deadline)) 
+  {
+    delay(1); // be nice, no busy loop
+  }
+  return Serial3.available()>=nbytes;
 }
 
-
-uint32_t handshake() {
-    uint32_t otherKey, fiveBytes;
+uint32_t handshake(uint32_t key) {
+    uint32_t otherKey;
     if (isServer) {
         while (Serial3.available == 0) {}  // waits for client
-        fiveBytes = uint32_from_serial3();
-    } else {
+        if (wait_on_serial3(5, 1000) == false) {
+            continue;
+        }
+        char message = Serial3.read();
+        otherKey = uint32_from_serial3();
+        if (message == 'C') {
+            Serial3.write('A');
+            uint32_to_serial3(key);
+        }
+        //while (Serial3.available == 0) {}
+        if (wait_on_serial3(1, 1000) == false) {
+            continue;
+        }
+        tempChar = Serial3.read();
+        while (tempChar != 'A') {
+            //while(Serial3.available == 0) {}
+            if (wait_on_serial3(5, 1000) == false) {
+            continue;
+            }
+            otherKey = uint32_from_serial3();
+            tempChar = Serial3.read();
+        }
+        Serial.println("Handshake success!");
 
+    } else {
+        while true {
+            Serial3.write('C');
+            uint32_to_serial3(key);
+            if (wait_on_serial3(5, 1000) == false) {
+                continue;
+            }
+        }
+        char message = Serial3.read();
+        otherKey = uint32_from_serial3();
+        Serial3.write('A');
+        Serial.println("Handshake success!");
     }
     return otherKey;
-}
+
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -376,6 +414,7 @@ int main() {
     pubKey = publicKey(privKey);
     incomingKey = getsharedInput();
     sharedKey = shareKey(incomingKey, privKey);
+    handshake(pubKey);
 
 /* makes sure all the characters are pushed to the screen */
     Serial.flush();
