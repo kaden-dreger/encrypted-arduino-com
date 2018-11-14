@@ -17,7 +17,9 @@
 
 // declaring global variables
 const int randPin = 1;
-const int P = 19211;
+const uint32_t P = 2147483647;
+const int communicationPin = 13;
+const bool isServer = false;
 
 using namespace std;
 
@@ -33,13 +35,13 @@ varying voltage and uses that to compute "random" values, taking
 the LSB everytime and using it to calculate the private key.
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 */
-uint16_t privateKey() {
+uint32_t privateKey() {
     // initializing local variables
-    uint16_t privKey = 0;
+    uint32_t privKey = 0;
     int LSB = 0, tempInt = 0, base2 = 2;
 
     // computing our private key
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < 32; i++) {
         tempInt = analogRead(randPin);  // reading the randPin
         /* 
         https://stackoverflow.com/questions/6647783/check-value-
@@ -71,19 +73,22 @@ a step by step approach is used to calculate parts of the
 equation at a time thus preventing overflow.
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 */
-uint32_t makeKey(int a, uint16_t b) {
+uint32_t makeKey(uint32_t a, uint32_t b) {
     uint32_t result;  // Initializing the resulting key.
+    uint32_t nextB = b;
 
-    /* A for loop that runs 'b' number of times*/
-    for (uint16_t i = 0; i < b; i++) {
-        if (i == 0) {
+    if (nextB = b) {
             result = 1 % P;  // Setting up the result.
             a = a % P;  // Setting up 'a'.
         }
-
-        /* Performing the calculations of 'result' step-by-step*/
-        result = (result * a) % P;
+    while (nextB > 0) {
+        if (nextB & 1) {
+            result = (result*a) % P;
+        }
+        a = (a*a) % P;
+        nextB = (nextB >> 1);
     }
+
     return result;
 }
 
@@ -99,9 +104,9 @@ This function is responsible for generating the public key that
 is sent to the partner user inorder to generate a shared key.
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 */
-uint32_t publicKey(uint16_t privKey) {
+uint32_t publicKey(uint32_t privKey) {
     uint32_t pubKey = 0;  // Initializing the pubKey.
-    int g = 6;  // Assigning the base as specified.
+    uint32_t g = 16807;  // Assigning the base as specified.
 
     /* Calling makeKey with 'g' and 'privKey' as parameters.*/
     pubKey = makeKey(g, privKey);
@@ -109,6 +114,49 @@ uint32_t publicKey(uint16_t privKey) {
     Serial.print("Your public key: ");
     Serial.println(pubKey);
     return pubKey;
+}
+
+/** Reads an uint32_t from Serial3, starting from the least-significant
+ * and finishing with the most significant byte. 
+ */
+uint32_t uint32_from_serial3() {
+  uint32_t num = 0;
+  num = num | ((uint32_t) Serial3.read()) << 0;
+  num = num | ((uint32_t) Serial3.read()) << 8;
+  num = num | ((uint32_t) Serial3.read()) << 16;
+  num = num | ((uint32_t) Serial3.read()) << 24;
+  return num;
+}
+
+
+/** Reads an uint32_t from Serial3, starting from the least-significant
+ * and finishing with the most significant byte. 
+ */
+uint32_t uint32_from_serial3() {
+  uint32_t num = 0;
+  num = num | ((uint32_t) Serial3.read()) << 0;
+  num = num | ((uint32_t) Serial3.read()) << 8;
+  num = num | ((uint32_t) Serial3.read()) << 16;
+  num = num | ((uint32_t) Serial3.read()) << 24;
+  return num;
+}
+
+uint32_t processBytes(uint32_t fiveBytes) {
+    uint32_t key, message;
+    
+    return key;
+}
+
+
+uint32_t handshake() {
+    uint32_t otherKey, fiveBytes;
+    if (isServer) {
+        while (Serial3.available == 0) {}  // waits for client
+        fiveBytes = uint32_from_serial3();
+    } else {
+
+    }
+    return otherKey;
 }
 
 
@@ -303,6 +351,12 @@ void setup() {
     Serial.begin(9600);    // Setting up the serial ports.
     Serial3.begin(9600);
     Serial.println("Calculating key...");
+
+    pinMode(communicationPin, INPUT);
+    if (digitalRead(communicationPin) == HIGH){
+        isServer = true;
+    }
+
 }
 
 
@@ -313,7 +367,7 @@ our program.
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 */
 int main() {
-    uint16_t privKey, incomingKey;  // Initializing values.
+    uint32_t privKey, incomingKey;  // Initializing values.
     uint32_t sharedKey, pubKey;
 
     setup();  // Calling each subsequent function.
