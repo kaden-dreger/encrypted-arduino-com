@@ -156,12 +156,13 @@ bool wait_on_serial3( uint8_t nbytes, long timeout ) {
 uint32_t handshake(uint32_t key) {
     uint32_t otherKey;
     bool timeout = false;
-    if (isServer) {
+    if (isServer) {  // Server side handshake process
         while (true) {
             while (Serial3.available() == 0) {}  // waits for client
             if (wait_on_serial3(5, 1000) == false) {
                 continue;
             }
+            Serial.println("Timeout 1 passed.");
             char message = Serial3.read();
             otherKey = uint32_from_serial3();
             if (message == 'C') {
@@ -172,30 +173,16 @@ uint32_t handshake(uint32_t key) {
             if (wait_on_serial3(1, 1000) == false) {
                 continue;
             }
+            Serial.println("Timeout 2 passed.");
             char tempChar = Serial3.read();
-            while (tempChar != 'A') {
-                //while(Serial3.available == 0) {}
-                if (wait_on_serial3(4, 1000) == false) {
-                    timeout = true;
-                    break;
-                }
-                otherKey = uint32_from_serial3();
-                if (wait_on_serial3(1, 1000) == false){
-                    timeout = true;
-                    break;
-                }
-                tempChar = Serial3.read();
-            }
-            if (timeout == true) {
-                timeout = false;
+            if (tempChar != 'A') {
                 continue;
             }
             Serial.println("Server side ran successfully.");
             break;
         }
         Serial.println("Handshake success!");
-
-    } else {
+    } else {  // Client side handshake process
         while (true) {
             Serial3.write('C');
             uint32_to_serial3(key);
@@ -410,6 +397,7 @@ void setup() {
     if (digitalRead(communicationPin) == HIGH){
         isServer = true;
     }
+    Serial.println();
     if (isServer) {
         Serial.println("This is the server.");
     } else {
@@ -429,7 +417,6 @@ int main() {
     uint32_t sharedKey, pubKey, otherKey;
 
     setup();  // Calling each subsequent function.
-
     privKey = privateKey();
     pubKey = publicKey(privKey);
     //incomingKey = getsharedInput();
@@ -440,6 +427,7 @@ int main() {
 
 /* makes sure all the characters are pushed to the screen */
     Serial.flush();
+    Serial3.flush();
 
     //chat(sharedKey);
 
