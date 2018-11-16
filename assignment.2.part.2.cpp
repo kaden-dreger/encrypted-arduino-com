@@ -155,6 +155,7 @@ bool wait_on_serial3( uint8_t nbytes, long timeout ) {
 
 uint32_t handshake(uint32_t key) {
     uint32_t otherKey;
+    bool timeout = false;
     if (isServer) {
         while (true) {
             while (Serial3.available() == 0) {}  // waits for client
@@ -174,13 +175,22 @@ uint32_t handshake(uint32_t key) {
             char tempChar = Serial3.read();
             while (tempChar != 'A') {
                 //while(Serial3.available == 0) {}
-                if (wait_on_serial3(5, 1000) == false) {
-                continue;
+                if (wait_on_serial3(4, 1000) == false) {
+                    timeout = true;
+                    break;
                 }
                 otherKey = uint32_from_serial3();
+                if (wait_on_serial3(1, 1000) == false){
+                    timeout = true;
+                    break;
+                }
                 tempChar = Serial3.read();
-
             }
+            if (timeout == true) {
+                timeout = false;
+                continue;
+            }
+            Serial.println("Server side ran successfully.");
             break;
         }
         Serial.println("Handshake success!");
@@ -192,6 +202,7 @@ uint32_t handshake(uint32_t key) {
             if (wait_on_serial3(5, 1000) == false) {
                 continue;
             }
+            Serial.println("Client side ran successfully.");
             break;
         }
         char message = Serial3.read();
@@ -393,14 +404,17 @@ void setup() {
     init();    // Initializing the arduino.
     Serial.begin(9600);    // Setting up the serial ports.
     Serial3.begin(9600);
-    Serial.println("Calculating key...");
+    //Serial.println("Calculating key...");
 
     pinMode(communicationPin, INPUT);
     if (digitalRead(communicationPin) == HIGH){
         isServer = true;
     }
-    Serial.println(isServer);
-
+    if (isServer) {
+        Serial.println("This is the server.");
+    } else {
+        Serial.println("This is the client.");
+    }
 }
 
 
