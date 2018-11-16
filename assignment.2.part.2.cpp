@@ -153,9 +153,33 @@ bool wait_on_serial3( uint8_t nbytes, long timeout ) {
   return Serial3.available()>=nbytes;
 }
 
+
+/** Implements the Park-Miller algorithm with 32 bit integer arithmetic 
+ * @return ((current_key * 48271)) mod (2^31 - 1);
+ * This is linear congruential generator, based on the multiplicative
+ * group of integers modulo m = 2^31 - 1.
+ * The generator has a long period and it is relatively efficient.
+ * Most importantly, the generator's modulus is not a power of two
+ * (as is for the built-in rng),
+ * hence the keys mod 2^{s} cannot be obtained
+ * by using a key with s bits.
+ * Based on:
+ * http://www.firstpr.com.au/dsp/rand31/rand31-park-miller-carta.cc.txt
+ */
+uint32_t next_key(uint32_t current_key) {
+  const uint32_t modulus = 0x7FFFFFFF; // 2^31-1
+  const uint32_t consta = 48271;  // we use that consta<2^16
+  uint32_t lo = consta*(current_key & 0xFFFF);  
+  uint32_t hi = consta*(current_key >> 16); 
+  lo += (hi & 0x7FFF)<<16;
+  lo += hi>>15;
+  if (lo > modulus) lo -= modulus;
+  return lo;
+}
+
+
 uint32_t handshake(uint32_t key) {
     uint32_t otherKey;
-    bool timeout = false;
     if (isServer) {  // Server side handshake process
         while (true) {
             while (Serial3.available() == 0) {}  // waits for client
@@ -263,7 +287,7 @@ This function is responsible for generating the shared key that
 both users use to encrypt and decrpyt the messages sent.
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 */
-uint32_t shareKey(uint16_t input, uint16_t privKey) {
+uint32_t shareKey(uint32_t input, uint32_t privKey) {
     uint32_t sharedKey = 0;  // Initializing the sharedKey.
 
     /* Calling the makeKey function to create the sharedKey*/
@@ -337,7 +361,7 @@ deals with sending information while the latter deals with
 recieving info.
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 */
-void chat(uint16_t key) {
+void chat(uint32_t key) {
     Serial.println("Chat is now running...");
     while (true) {  // Main while loop that never breaks.
         /* Wait for input from the user to send to the partner*/
@@ -353,12 +377,14 @@ void chat(uint16_t key) {
                 end of the message*/
                 Serial3.write(encrypt('\n', key));
                 Serial.println();
+                key = next_key(key);
                 break;
 
             } else {
                 /* Encrypt the given character then send to
                    serial3*/
                 Serial3.write(encrypt(chatChar, key));
+                key = next_key(key);
             }
         }
 
@@ -369,6 +395,7 @@ void chat(uint16_t key) {
 
             /* Decrypt the given byte as a character*/
             char dByte = decrypt(byte, key);
+            key = next_key(key);
 
             if (dByte == '\n') {    // Check for end of message.
                 Serial.println();
@@ -420,10 +447,13 @@ int main() {
     privKey = privateKey();
     pubKey = publicKey(privKey);
     //incomingKey = getsharedInput();
-    //sharedKey = shareKey(incomingKey, privKey);
     otherKey = handshake(pubKey);
     Serial.print("The other key is: ");
     Serial.println(otherKey);
+    sharedKey = shareKey(otherKey, privKey);
+    Serial.print("The shared key is: ");
+    Serial.println(sharedKey);
+    chat(sharedKey);
 
 /* makes sure all the characters are pushed to the screen */
     Serial.flush();
