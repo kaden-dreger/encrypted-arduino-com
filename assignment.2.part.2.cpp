@@ -52,6 +52,8 @@ uint32_t privateKey() {
         privKey += LSB*(pow(base2, i));  // updating privKey using the LSB
         delay(50);  // delay to allows the voltage of randPin to fluctuate
     }
+    Serial.print("The private key is: ");
+    Serial.println(privKey);
     return privKey;
 }
 
@@ -75,20 +77,30 @@ equation at a time thus preventing overflow.
 */
 uint32_t makeKey(uint32_t a, uint32_t b) {
     uint32_t result;  // Initializing the resulting key.
-    uint32_t nextB = b;
-
-    if (nextB == b) {
-            result = 1 % P;  // Setting up the result.
-            a = a % P;  // Setting up 'a'.
-        }
-    while (nextB > 0) {
-        if (nextB & 1) {
-            result = (result*a) % P;
-        }
-        a = (a*a) % P;
-        nextB = (nextB >> 1);
+    uint32_t bit = 0;
+    uint32_t i = 0, temp;
+    bit = b % 2;
+    if (bit) {
+        result = (a^(2^i)) % P;
     }
-
+    temp = (b - bit) / 2;
+    bit = (temp) % 2;
+    i++;
+        if (bit) {
+           result *= (a^(2^i)) % P;
+        }
+    while (true) {
+        i++;
+        bit = ((temp - bit) / 2) % 2;
+        if (bit) {
+           result *= (a^(2^i)) % P;
+        }
+        if ((temp - bit) == 0){
+            break;
+        }
+        result = result % P;
+        temp = (temp - bit) / 2;
+    }
     return result;
 }
 
@@ -451,8 +463,6 @@ int main() {
     Serial.print("The other key is: ");
     Serial.println(otherKey);
     sharedKey = shareKey(otherKey, privKey);
-    Serial.print("The shared key is: ");
-    Serial.println(sharedKey);
     chat(sharedKey);
 
 /* makes sure all the characters are pushed to the screen */
