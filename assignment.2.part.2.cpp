@@ -1,6 +1,6 @@
 /*
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-* Assignment 2 Part 1
+* Assignment 2 Part 2
 * Rutvik Patel and Kaden Dreger
 * ID: 1530012 and 1528632
 * CCID: rutvik, kaden
@@ -12,7 +12,7 @@
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 */
 
-#include <Arduino.h>  // including the required libraries
+#include <Arduino.h>
 #include <math.h>
 
 // declaring global variables
@@ -27,7 +27,7 @@ using namespace std;
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 The privateKey function takes in no paramaters.
     Returns:
-        privKey: a uin16_t type variable which stores the
+        privKey: a uin32_t type variable which stores the
                  computed private key.
 This function is responsible for generating the private key that
 is to be used by the user. It uses the analog pin as a source of
@@ -107,7 +107,7 @@ uint32_t makeKey(uint32_t a, uint32_t b) {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 The publicKey function takes the following paramaters:
-        privKey: Which is a uint16_t private key that was created
+        privKey: Which is a uint32_t private key that was created
                  previously.
     Returns:
         pubKey: a uin32_t type variable which stores the
@@ -128,6 +128,9 @@ uint32_t publicKey(uint32_t privKey) {
     return pubKey;
 }
 
+/** Writes an uint32_t to Serial3, starting from the least-significant
+ * and finishing with the most significant byte. 
+ */
 void uint32_to_serial3(uint32_t num) {
   Serial3.write((char) (num >> 0));
   Serial3.write((char) (num >> 8));
@@ -189,14 +192,25 @@ uint32_t next_key(uint32_t current_key) {
   return lo;
 }
 
-
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+The handshake function takes the following paramaters:
+        key: Which is a uint32_t key that is passed throught the
+             program.
+    Returns:
+    otherKey: a uin32_t type key which is the other users public
+              key which is automatically exchanged using this
+              handshake protocol.
+This function is responsible for performing the handshake
+protocol and schematic given in the assignment description.
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*/
 uint32_t handshake(uint32_t key) {
     uint32_t otherKey;
     if (isServer) {  // Server side handshake process
         while (true) {
             while (Serial3.available() == 0) {}  // waits for client
             if (wait_on_serial3(5, 1000) == false) {
-                continue;
+                continue;  // handling timeout
             }
             Serial.println("Timeout 1 passed.");
             char message = Serial3.read();
@@ -207,7 +221,7 @@ uint32_t handshake(uint32_t key) {
             }
             //while (Serial3.available == 0) {}
             if (wait_on_serial3(1, 1000) == false) {
-                continue;
+                continue;  // handling timeout
             }
             Serial.println("Timeout 2 passed.");
             char tempChar = Serial3.read();
@@ -223,7 +237,7 @@ uint32_t handshake(uint32_t key) {
             Serial3.write('C');
             uint32_to_serial3(key);
             if (wait_on_serial3(5, 1000) == false) {
-                continue;
+                continue;  // handling timeout
             }
             Serial.println("Client side ran successfully.");
             break;
@@ -289,8 +303,8 @@ uint16_t getsharedInput() {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 The shareKey function takes the following paramaters:
-        input: Which is a uint16_t that is the other users key.
-      privKey: Which is a uint16_t private key that was created
+        input: Which is a uint32_t that is the other users key.
+      privKey: Which is a uint32_from_serial32_t private key that was created
                previously.
       Returns:
         sharedKey: a uin32_t type variable which stores the
