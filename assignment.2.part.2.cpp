@@ -76,31 +76,27 @@ equation at a time thus preventing overflow.
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 */
 uint32_t makeKey(uint32_t a, uint32_t b) {
-    uint32_t result;  // Initializing the resulting key.
-    uint32_t bit = 0;
-    uint32_t i = 0, temp;
+    uint32_t result = 1;  // Initializing the resulting key.
+    uint32_t bit = 0, base2 = 2;
+    uint32_t temp = b, nextTemp;
+    int i = 0;
     bit = b % 2;
     if (bit) {
-        result = (a^(2^i)) % P;
+        result = ((uint32_t) pow(a, ((uint32_t) pow(2, i)))) % P;
     }
-    temp = (b - bit) / 2;
-    bit = (temp) % 2;
-    i++;
-        if (bit) {
-           result *= (a^(2^i)) % P;
-        }
     while (true) {
         i++;
+        nextTemp = (temp - bit) / 2;
         bit = ((temp - bit) / 2) % 2;
+        temp = nextTemp;
         if (bit) {
-           result *= (a^(2^i)) % P;
+           result *= (((uint32_t) pow(a, (((uint32_t) pow(base2, i)) + 1)) + 1) % P);
         }
         if ((temp - bit) == 0) {
             break;
         }
-        result = result % P;
-        temp = (temp - bit) / 2;
     }
+    result = result % P;
     return result;
 }
 
@@ -246,7 +242,7 @@ uint32_t handshake(uint32_t key) {
             break;
         }
 
-        char message = Serial3.read();
+        Serial3.read();
         otherKey = uint32_from_serial3();
         Serial3.write('A');
         Serial.println("Handshake success!");
@@ -470,7 +466,7 @@ our program.
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 */
 int main() {
-    uint32_t privKey, incomingKey;  // Initializing values.
+    uint32_t privKey;  // Initializing values.
     uint32_t sharedKey, pubKey, otherKey;
 
     setup();  // Calling each subsequent function.
