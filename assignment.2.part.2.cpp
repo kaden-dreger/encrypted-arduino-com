@@ -95,7 +95,7 @@ uint32_t makeKey(uint32_t a, uint32_t b) {
         if (bit) {
            result *= (a^(2^i)) % P;
         }
-        if ((temp - bit) == 0){
+        if ((temp - bit) == 0) {
             break;
         }
         result = result % P;
@@ -159,13 +159,12 @@ uint32_t uint32_from_serial3() {
  *                if timeouts are turned off).
  * @return True if the required number of bytes have arrived.
  */
-bool wait_on_serial3( uint8_t nbytes, long timeout ) {
-  unsigned long deadline = millis() + timeout;//wraparound not a problem
-  while (Serial3.available()<nbytes && (timeout<0 || millis()<deadline)) 
-  {
-    delay(1); // be nice, no busy loop
+bool wait_on_serial3(uint8_t nbytes, long timeout) {
+  unsigned long deadline = millis() + timeout;  // wraparound not a problem
+  while (Serial3.available() < nbytes && (timeout < 0 || millis() < deadline)) {
+    delay(1);  // be nice, no busy loop
   }
-  return Serial3.available()>=nbytes;
+  return Serial3.available() >= nbytes;
 }
 
 
@@ -182,12 +181,12 @@ bool wait_on_serial3( uint8_t nbytes, long timeout ) {
  * http://www.firstpr.com.au/dsp/rand31/rand31-park-miller-carta.cc.txt
  */
 uint32_t next_key(uint32_t current_key) {
-  const uint32_t modulus = 0x7FFFFFFF; // 2^31-1
+  const uint32_t modulus = 0x7FFFFFFF;  // 2^31-1
   const uint32_t consta = 48271;  // we use that consta<2^16
-  uint32_t lo = consta*(current_key & 0xFFFF);  
-  uint32_t hi = consta*(current_key >> 16); 
-  lo += (hi & 0x7FFF)<<16;
-  lo += hi>>15;
+  uint32_t lo = consta*(current_key & 0xFFFF);
+  uint32_t hi = consta*(current_key >> 16);
+  lo += (hi & 0x7FFF) << 16;
+  lo += hi >> 15;
   if (lo > modulus) lo -= modulus;
   return lo;
 }
@@ -206,12 +205,14 @@ protocol and schematic given in the assignment description.
 */
 uint32_t handshake(uint32_t key) {
     uint32_t otherKey;
+
     if (isServer) {  // Server side handshake process
         while (true) {
             while (Serial3.available() == 0) {}  // waits for client
             if (wait_on_serial3(5, 1000) == false) {
                 continue;  // handling timeout
             }
+
             Serial.println("Timeout 1 passed.");
             char message = Serial3.read();
             otherKey = uint32_from_serial3();
@@ -219,10 +220,10 @@ uint32_t handshake(uint32_t key) {
                 Serial3.write('A');
                 uint32_to_serial3(key);
             }
-            //while (Serial3.available == 0) {}
             if (wait_on_serial3(1, 1000) == false) {
                 continue;  // handling timeout
             }
+
             Serial.println("Timeout 2 passed.");
             char tempChar = Serial3.read();
             if (tempChar != 'A') {
@@ -232,6 +233,7 @@ uint32_t handshake(uint32_t key) {
             break;
         }
         Serial.println("Handshake success!");
+
     } else {  // Client side handshake process
         while (true) {
             Serial3.write('C');
@@ -239,9 +241,11 @@ uint32_t handshake(uint32_t key) {
             if (wait_on_serial3(5, 1000) == false) {
                 continue;  // handling timeout
             }
+
             Serial.println("Client side ran successfully.");
             break;
         }
+
         char message = Serial3.read();
         otherKey = uint32_from_serial3();
         Serial3.write('A');
@@ -263,7 +267,6 @@ and reading it from serial-mon. Once the key is read it is
 returned as an integer.
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 */
-
 uint16_t getsharedInput() {
     /* Initialization of the inputRead variable.*/
     uint16_t inputRead = 0;
@@ -272,6 +275,7 @@ uint16_t getsharedInput() {
     while (true) {   // A while loop that runs until the return
                      // key is pressed.
         while (Serial.available() == 0) {}  // wait for input...
+
         /* Reading in the input as a character.*/
         char tempChar = Serial.read();
 
@@ -296,6 +300,7 @@ uint16_t getsharedInput() {
             inputRead = inputRead*10 + tempInt;
         }
     }
+
     Serial.println();
     return inputRead;
 }
@@ -444,10 +449,9 @@ void setup() {
     init();    // Initializing the arduino.
     Serial.begin(9600);    // Setting up the serial ports.
     Serial3.begin(9600);
-    //Serial.println("Calculating key...");
 
     pinMode(communicationPin, INPUT);
-    if (digitalRead(communicationPin) == HIGH){
+    if (digitalRead(communicationPin) == HIGH) {
         isServer = true;
     }
     Serial.println();
@@ -470,9 +474,9 @@ int main() {
     uint32_t sharedKey, pubKey, otherKey;
 
     setup();  // Calling each subsequent function.
+
     privKey = privateKey();
     pubKey = publicKey(privKey);
-    //incomingKey = getsharedInput();
     otherKey = handshake(pubKey);
     Serial.print("The other key is: ");
     Serial.println(otherKey);
@@ -482,8 +486,6 @@ int main() {
 /* makes sure all the characters are pushed to the screen */
     Serial.flush();
     Serial3.flush();
-
-    //chat(sharedKey);
 
     return 0;
 }
