@@ -197,8 +197,6 @@ uint32_t handshake(uint32_t key) {
             if (wait_on_serial3(5, 1000) == false) {
                 continue;  // handling timeout
             }
-
-            Serial.println("Timeout 1 passed.");
             char message = Serial3.read();
             otherKey = uint32_from_serial3();
             if (message == 'C') {
@@ -208,16 +206,12 @@ uint32_t handshake(uint32_t key) {
             if (wait_on_serial3(1, 1000) == false) {
                 continue;  // handling timeout
             }
-
-            Serial.println("Timeout 2 passed.");
             char tempChar = Serial3.read();
             if (tempChar != 'A') {
                 continue;
             }
-            Serial.println("Server side ran successfully.");
             break;
         }
-        Serial.println("Handshake success!");
 
     } else {  // Client side handshake process
         while (true) {
@@ -226,68 +220,15 @@ uint32_t handshake(uint32_t key) {
             if (wait_on_serial3(5, 1000) == false) {
                 continue;  // handling timeout
             }
-
-            Serial.println("Client side ran successfully.");
             break;
         }
 
         Serial3.read();
         otherKey = uint32_from_serial3();
         Serial3.write('A');
-        Serial.println("Handshake success!");
     }
+    Serial.println("Handshake success!");
     return otherKey;
-}
-
-
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-The getsharedInput function takes no paramaters.
-
-    Returns:
-        inputRead: a uin16_t type variable which stores the
-                   public key from the other user.
-This function is responsible for getting the public key from
-the other user. This is done by entering the key via keyboard
-and reading it from serial-mon. Once the key is read it is
-returned as an integer.
-* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-*/
-uint16_t getsharedInput() {
-    /* Initialization of the inputRead variable.*/
-    uint16_t inputRead = 0;
-    Serial.print("Enter your partner's key: ");
-
-    while (true) {   // A while loop that runs until the return
-                     // key is pressed.
-        while (Serial.available() == 0) {}  // wait for input...
-
-        /* Reading in the input as a character.*/
-        char tempChar = Serial.read();
-
-        /*https://stackoverflow.com/questions/5029840/
-        convert-char-to-int-in-c-and-c*/
-        /* Converting the ascii value to an integer.*/
-        int tempInt = tempChar - '0';
-
-        /* As each character is typed it is printed to the 
-           serial-mon.*/
-        Serial.print(tempChar);
-
-        /* This checks if the return key was pressed.*/
-        if (tempChar == '\r') {
-            break;
-
-        } else {
-            /* This makes sure that the entered input is 
-               converted to a decimal integer by increasing
-               the inputRead by 10 everytime a new char is
-               read in.*/
-            inputRead = inputRead*10 + tempInt;
-        }
-    }
-
-    Serial.println();
-    return inputRead;
 }
 
 
@@ -426,12 +367,13 @@ void chat(uint32_t key) {
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-This function is responsible for setting up the Arduino to be
+This function is responsible for setting up the user Arduino to be
 able to communicate on both serial ports.
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 */
 void setup() {
     init();    // Initializing the arduino.
+
     Serial.begin(9600);    // Setting up the serial ports.
     Serial3.begin(9600);
 
@@ -441,15 +383,15 @@ void setup() {
     }
     Serial.println();
     if (isServer) {
-        Serial.println("This is the server.");
+        Serial.println("This is the 'server' Arduino.");
     } else {
-        Serial.println("This is the client.");
+        Serial.println("This is the 'client' Arduino.");
     }
 }
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-This is the main function of the program and calls all other
+This is the driver function of the program and calls all other
 functions from here. This is the high level algorithm for
 our program.
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -460,13 +402,14 @@ int main() {
 
     setup();  // Calling each subsequent function.
 
-    privKey = privateKey();
+    privKey = privateKey();  // computing keys
     pubKey = publicKey(privKey);
-    otherKey = handshake(pubKey);
-    Serial.print("The other key is: ");
-    Serial.println(otherKey);
+
+    otherKey = handshake(pubKey);  // running handshake protocol
+
     sharedKey = shareKey(otherKey, privKey);
-    chat(sharedKey);
+
+    chat(sharedKey);  // establishing chat
 
 /* makes sure all the characters are pushed to the screen */
     Serial.flush();
