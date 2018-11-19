@@ -76,6 +76,7 @@ equation at a time thus preventing overflow.
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 */
 uint32_t makeKey(uint32_t a, uint32_t b) {
+    /*
     uint32_t result = 1;  // Initializing the resulting key.
     uint32_t bit = 0, base2 = 2;
     uint32_t temp = b, nextTemp;
@@ -90,13 +91,28 @@ uint32_t makeKey(uint32_t a, uint32_t b) {
         bit = ((temp - bit) / 2) % 2;
         temp = nextTemp;
         if (bit) {
-           result *= (((uint32_t) pow(a, (((uint32_t) pow(base2, i)) + 1)) + 1) % P);
+           result *= (((uint32_t) pow(a, (((uint32_t) pow(base2, i))
+            + 1)) + 1) % P);
         }
         if ((temp - bit) == 0) {
             break;
         }
     }
     result = result % P;
+    */
+    uint32_t result = 0, nextB = 1;
+    for (int i = 0; i < 31; i++) {
+        if (i = 0) {
+            nexB = b % P;
+        } else {
+            nextB = (2 % P) * (nextB % P) % P;
+        } 
+        if (a & 1) {  // checking LSB
+            result += (nextB % P) % P;
+        }
+        a = a >> 1;
+        result = result % P;           
+    }
     return result;
 }
 
@@ -485,4 +501,3 @@ int main() {
 
     return 0;
 }
-
