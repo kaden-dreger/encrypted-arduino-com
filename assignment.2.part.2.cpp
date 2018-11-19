@@ -52,15 +52,13 @@ uint32_t privateKey() {
         privKey += LSB*(pow(base2, i));  // updating privKey using the LSB
         delay(50);  // delay to allows the voltage of randPin to fluctuate
     }
-    Serial.print("The private key is: ");
-    Serial.println(privKey);
     return privKey;
 }
 
 
 /*
     This function is a modified implementation from the version
-    showed in class, specifically the diffie_hellman_prelim.cpp
+    showed in class, specifically the powmod.cpp
 */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 The makeKey function takes the following paramaters:
@@ -76,42 +74,18 @@ equation at a time thus preventing overflow.
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 */
 uint32_t makeKey(uint32_t a, uint32_t b) {
-    /*
-    uint32_t result = 1;  // Initializing the resulting key.
-    uint32_t bit = 0, base2 = 2;
-    uint32_t temp = b, nextTemp;
-    int i = 0;
-    bit = b % 2;
-    if (bit) {
-        result = ((uint32_t) pow(a, ((uint32_t) pow(2, i)))) % P;
-    }
-    while (true) {
-        i++;
-        nextTemp = (temp - bit) / 2;
-        bit = ((temp - bit) / 2) % 2;
-        temp = nextTemp;
-        if (bit) {
-           result *= (((uint32_t) pow(a, (((uint32_t) pow(base2, i))
-            + 1)) + 1) % P);
-        }
-        if ((temp - bit) == 0) {
-            break;
-        }
-    }
-    result = result % P;
-    */
     uint32_t result = 0, nextB = 1;
     for (int i = 0; i < 31; i++) {
-        if (i = 0) {
-            nexB = b % P;
+        if (i == 0) {
+            nextB = b % P;
         } else {
             nextB = (2 % P) * (nextB % P) % P;
-        } 
+        }
         if (a & 1) {  // checking LSB
             result += (nextB % P) % P;
         }
         a = a >> 1;
-        result = result % P;           
+        result = result % P;
     }
     return result;
 }
@@ -134,11 +108,9 @@ uint32_t publicKey(uint32_t privKey) {
 
     /* Calling makeKey with 'g' and 'privKey' as parameters.*/
     pubKey = makeKey(g, privKey);
-
-    Serial.print("Your public key: ");
-    Serial.println(pubKey);
     return pubKey;
 }
+
 
 /** Writes an uint32_t to Serial3, starting from the least-significant
  * and finishing with the most significant byte. 
@@ -202,6 +174,7 @@ uint32_t next_key(uint32_t current_key) {
   if (lo > modulus) lo -= modulus;
   return lo;
 }
+
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 The handshake function takes the following paramaters:
