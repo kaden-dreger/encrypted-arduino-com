@@ -108,6 +108,8 @@ uint32_t publicKey(uint32_t privKey) {
 
     /* Calling makeKey with 'g' and 'privKey' as parameters.*/
     pubKey = makeKey(g, privKey);
+    Serial.print("Your personal public key is: ");
+    Serial.println(pubKey);
     return pubKey;
 }
 
@@ -190,7 +192,7 @@ protocol and schematic given in the assignment description.
 */
 uint32_t handshake(uint32_t key) {
     uint32_t otherKey;
-
+    Serial.println("Starting handshake protocol...");
     if (isServer) {  // Server side handshake process
         while (true) {
             while (Serial3.available() == 0) {}  // waits for client
